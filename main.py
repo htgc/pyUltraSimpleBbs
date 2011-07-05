@@ -14,18 +14,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from google.appengine.ext import webapp
+from google.appengine.ext import webapp,db
 from google.appengine.ext.webapp import util
 
+# Model
+class Comment(db.Model):
+	pub_date = db.DateTimeProperty(auto_now_add=True)
+	comment = db.StringProperty(multiline=True)
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
-        self.response.out.write('Hello world!')
+		self.response.out.write(u'<div><h1>webappで超簡易掲示板</h1></div>')
+		self.response.out.write('''
+			<form action="/post" method="post">
+				<textarea name="comment" rows="3" cols="60" ></textarea>
+				<input type="submit" value="Post" />
+			</form>''')
+		for c in Comment.all():
+			self.response.out.write("<div>" + c.comment + "</div>")
+	
+
+class PostHandler(webapp.RequestHandler):
+	def post(self):
+		c = Comment()
+		c.comment = self.request.get('comment')
+		# データベースに登録
+		c.put()
+		# MainHandlerへリダイレクト
+		self.redirect('/')
 
 
 def main():
-    application = webapp.WSGIApplication([('/', MainHandler)],
-                                         debug=True)
+    application = webapp.WSGIApplication([
+		('/', MainHandler),
+		('/post', PostHandler),
+		],
+        debug=True)
     util.run_wsgi_app(application)
 
 
