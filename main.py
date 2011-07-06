@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 #!/usr/bin/env python
 #
 # Copyright 2007 Google Inc.
@@ -15,7 +16,8 @@
 # limitations under the License.
 #
 from google.appengine.ext import webapp,db
-from google.appengine.ext.webapp import util
+from google.appengine.ext.webapp import util, template
+import os
 
 # Model
 class Comment(db.Model):
@@ -24,15 +26,12 @@ class Comment(db.Model):
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
-		self.response.out.write(u'<div><h1>webappで超簡易掲示板</h1></div>')
-		self.response.out.write('''
-			<form action="/post" method="post">
-				<textarea name="comment" rows="3" cols="60" ></textarea>
-				<input type="submit" value="Post" />
-			</form>''')
-		for c in Comment.all():
-			self.response.out.write("<div>" + c.comment + "</div>")
-	
+		comments = Comment.all()
+		template_values = {'comments': comments,}
+
+		path = os.path.join(os.path.dirname(__file__), 'index.html')
+		self.response.out.write(template.render(path, template_values))
+
 
 class PostHandler(webapp.RequestHandler):
 	def post(self):
