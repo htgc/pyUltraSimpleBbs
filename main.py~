@@ -44,6 +44,7 @@ class MainHandler(webapp.RequestHandler):
 				<input type="submit" value="Post" />
 			</form>''')
 		for c in Comment.all():
+			self.response.out.write('<div><p>' + c.comment + '& %s</p>' % c.key) 
 			self.response.out.write('<a href="/img?img_id=%s"><image height="50" width="50" src="/img?img_id=%s"/></a></div>' % (c.key, c.key))
 
 	
