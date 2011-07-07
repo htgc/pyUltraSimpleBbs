@@ -23,6 +23,7 @@ import os
 class Comment(db.Model):
 	pub_date = db.DateTimeProperty(auto_now_add=True)
 	comment = db.StringProperty(multiline=True)
+	image = db.BlobProperty()
 
 class MainHandler(webapp.RequestHandler):
     def get(self):
@@ -32,11 +33,23 @@ class MainHandler(webapp.RequestHandler):
 		path = os.path.join(os.path.dirname(__file__), 'index.html')
 		self.response.out.write(template.render(path, template_values))
 
+class ImageHandler(webapp.RequestHandler):
+	def get(self):
+		try:
+			c = db.get(self.request.get('img_id'))
+			self.response.headers['Content-Type'] = 'image/png'
+			self.response.out.write(c.image)
+		except:
+			self.response.out.write()
 
 class PostHandler(webapp.RequestHandler):
 	def post(self):
 		c = Comment()
 		c.comment = self.request.get('comment')
+		img = self.request.get('image')
+		if img:
+			c.image = db.Blob(str(img))
+
 		# データベースに登録
 		c.put()
 		# MainHandlerへリダイレクト
@@ -47,6 +60,7 @@ def main():
     application = webapp.WSGIApplication([
 		('/', MainHandler),
 		('/post', PostHandler),
+		('/get_img', ImageHandler),
 		],
         debug=True)
     util.run_wsgi_app(application)
