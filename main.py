@@ -15,20 +15,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from google.appengine.api import users
 from google.appengine.ext import webapp,db
 from google.appengine.ext.webapp import util, template
+from google.appengine.ext.webapp.util import login_required
 import os
 
 # Model
 class Comment(db.Model):
 	pub_date = db.DateTimeProperty(auto_now_add=True)
+	author = db.UserProperty()
 	comment = db.StringProperty(multiline=True)
 	image = db.BlobProperty()
 
 class MainHandler(webapp.RequestHandler):
+    @login_required
     def get(self):
 		comments = Comment.all()
-		template_values = {'comments': comments,}
+		if users.get_current_user():
+			url = users.create_logout_url(self.request.uri)
+			link_text = 'Logout'
+		else:
+			url = users.create_login_url(self.request.uri)
+			link_text = 'Login'
+
+		template_values = {
+			'comments': comments,
+			'url': url,
+			'link_text': link_text,
+		}
 
 		path = os.path.join(os.path.dirname(__file__), 'index.html')
 		self.response.out.write(template.render(path, template_values))
@@ -49,6 +64,9 @@ class PostHandler(webapp.RequestHandler):
 		img = self.request.get('image')
 		if img:
 			c.image = db.Blob(str(img))
+
+		if users.get_current_user():
+			c.author = users.get_current_user()
 
 		# データベースに登録
 		c.put()
